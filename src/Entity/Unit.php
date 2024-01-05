@@ -2,40 +2,59 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Traits\HasIdtrait;
-use App\Repository\UnitRepository;
 use ApiPlatform\Metadata\ApiResource;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use App\Entity\Traits\HasIdTrait;
+use App\Repository\UnitRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UnitRepository::class)]
-#[ApiResource()]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new Patch(security: "is_granted('ROLE_USER')"),
+        new Delete(security: "is_granted('ROLE_USER')"),
+        new GetCollection(),
+        new Post(security: "is_granted('ROLE_USER')"),
+    ],
+    normalizationContext: ['groups' => ['get']]
+)]
 class Unit
 {
-    use HasIdtrait;
+    use HasIdTrait;
 
-    #[ORM\Column(length: 255, nullable: false)]
+    #[ORM\Column(length: 64)]
+    #[Groups(['get'])]
     private ?string $singular = null;
 
-    #[ORM\Column(length: 255, nullable: false)]
+    #[ORM\Column(length: 64)]
+    #[Groups(['get'])]
     private ?string $plural = null;
 
+    /**
+     * @var Collection<int, RecipeHasIngredient>
+     */
     #[ORM\OneToMany(mappedBy: 'unit', targetEntity: RecipeHasIngredient::class)]
-    private Collection $recipehasingredient;
+    private Collection $recipeHasIngredients;
 
     public function __construct()
     {
-        $this->recipehasingredient = new ArrayCollection();
+        $this->recipeHasIngredients = new ArrayCollection();
     }
-
 
     public function getSingular(): ?string
     {
         return $this->singular;
     }
 
-    public function setSingular(?string $singular): static
+    public function setSingular(string $singular): self
     {
         $this->singular = $singular;
 
@@ -47,7 +66,7 @@ class Unit
         return $this->plural;
     }
 
-    public function setPlural(?string $plural): static
+    public function setPlural(string $plural): self
     {
         $this->plural = $plural;
 
@@ -57,30 +76,35 @@ class Unit
     /**
      * @return Collection<int, RecipeHasIngredient>
      */
-    public function getRecipehasingredient(): Collection
+    public function getRecipeHasIngredients(): Collection
     {
-        return $this->recipehasingredient;
+        return $this->recipeHasIngredients;
     }
 
-    public function addRecipehasingredient(RecipeHasIngredient $recipehasingredient): static
+    public function addRecipeHasIngredient(RecipeHasIngredient $recipeHasIngredient): self
     {
-        if (!$this->recipehasingredient->contains($recipehasingredient)) {
-            $this->recipehasingredient->add($recipehasingredient);
-            $recipehasingredient->setUnit($this);
+        if (!$this->recipeHasIngredients->contains($recipeHasIngredient)) {
+            $this->recipeHasIngredients[] = $recipeHasIngredient;
+            $recipeHasIngredient->setUnit($this);
         }
 
         return $this;
     }
 
-    public function removeRecipehasingredient(RecipeHasIngredient $recipehasingredient): static
+    public function removeRecipeHasIngredient(RecipeHasIngredient $recipeHasIngredient): self
     {
-        if ($this->recipehasingredient->removeElement($recipehasingredient)) {
+        if ($this->recipeHasIngredients->removeElement($recipeHasIngredient)) {
             // set the owning side to null (unless already changed)
-            if ($recipehasingredient->getUnit() === $this) {
-                $recipehasingredient->setUnit(null);
+            if ($recipeHasIngredient->getUnit() === $this) {
+                $recipeHasIngredient->setUnit(null);
             }
         }
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getSingular() . ' / ' . $this->getPlural();
     }
 }

@@ -2,41 +2,61 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Traits\HasIdtrait;
-use App\Entity\Traits\HasNametrait;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use App\Entity\Traits\HasDescriptionTrait;
+use App\Entity\Traits\HasIdTrait;
+use App\Entity\Traits\HasNameTrait;
+use App\Entity\Traits\HasTimestampTrait;
 use App\Repository\IngredientRepository;
-use App\Entity\Traits\HasDescriptiontrait;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: IngredientRepository::class)]
-#[ApiResource()]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new Patch(),
+        new Delete(),
+        new GetCollection(),
+        new Post(),
+    ],
+    normalizationContext: ['groups' => ['get']],
+    security: "is_granted('ROLE_USER')"
+)]
 class Ingredient
 {
-    use HasIdtrait;
-
-    use HasNametrait;
-
-    use HasDescriptiontrait;
-
-    use TimestampableEntity;
+    use HasIdTrait;
+    use HasNameTrait;
+    use HasDescriptionTrait;
+    use HasTimestampTrait;
 
     #[ORM\Column]
-    private ?bool $vegan = null;
+    #[Groups(['get'])]
+    private ?bool $vegan = false;
 
     #[ORM\Column]
-    private ?bool $vegetarian = null;
+    #[Groups(['get'])]
+    private ?bool $vegetarian = true;
 
     #[ORM\Column]
-    private ?bool $dairyFree = null;
+    #[Groups(['get'])]
+    private ?bool $dairyFree = false;
 
     #[ORM\Column]
-    private ?bool $glutenFree = null;
+    #[Groups(['get'])]
+    private ?bool $glutenFree = false;
 
-    #[ORM\OneToMany(mappedBy: 'ingredient', targetEntity: RecipeHasIngredient::class)]
+    /**
+     * @var Collection<int, RecipeHasIngredient>
+     */
+    #[ORM\OneToMany(mappedBy: 'ingredient', targetEntity: RecipeHasIngredient::class, orphanRemoval: true)]
     private Collection $recipeHasIngredients;
 
     public function __construct()
@@ -44,14 +64,12 @@ class Ingredient
         $this->recipeHasIngredients = new ArrayCollection();
     }
 
-
-
     public function isVegan(): ?bool
     {
         return $this->vegan;
     }
 
-    public function setVegan(bool $vegan): static
+    public function setVegan(bool $vegan): self
     {
         $this->vegan = $vegan;
 
@@ -63,7 +81,7 @@ class Ingredient
         return $this->vegetarian;
     }
 
-    public function setVegetarian(bool $vegetarian): static
+    public function setVegetarian(bool $vegetarian): self
     {
         $this->vegetarian = $vegetarian;
 
@@ -75,7 +93,7 @@ class Ingredient
         return $this->dairyFree;
     }
 
-    public function setDairyFree(bool $dairyFree): static
+    public function setDairyFree(bool $dairyFree): self
     {
         $this->dairyFree = $dairyFree;
 
@@ -87,7 +105,7 @@ class Ingredient
         return $this->glutenFree;
     }
 
-    public function setGlutenFree(bool $glutenFree): static
+    public function setGlutenFree(bool $glutenFree): self
     {
         $this->glutenFree = $glutenFree;
 
@@ -102,17 +120,17 @@ class Ingredient
         return $this->recipeHasIngredients;
     }
 
-    public function addRecipeHasIngredient(RecipeHasIngredient $recipeHasIngredient): static
+    public function addRecipeHasIngredient(RecipeHasIngredient $recipeHasIngredient): self
     {
         if (!$this->recipeHasIngredients->contains($recipeHasIngredient)) {
-            $this->recipeHasIngredients->add($recipeHasIngredient);
+            $this->recipeHasIngredients[] = $recipeHasIngredient;
             $recipeHasIngredient->setIngredient($this);
         }
 
         return $this;
     }
 
-    public function removeRecipeHasIngredient(RecipeHasIngredient $recipeHasIngredient): static
+    public function removeRecipeHasIngredient(RecipeHasIngredient $recipeHasIngredient): self
     {
         if ($this->recipeHasIngredients->removeElement($recipeHasIngredient)) {
             // set the owning side to null (unless already changed)
@@ -122,5 +140,10 @@ class Ingredient
         }
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getName() . ' (' . $this->getId() . ')';
     }
 }

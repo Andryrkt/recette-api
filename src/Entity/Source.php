@@ -2,46 +2,61 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Traits\HasIdtrait;
-use App\Entity\Traits\HasNametrait;
-use App\Repository\SourceRepository;
 use ApiPlatform\Metadata\ApiResource;
-use App\Entity\Traits\HasDescriptiontrait;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use App\Entity\Traits\HasDescriptionTrait;
+use App\Entity\Traits\HasIdTrait;
+use App\Entity\Traits\HasNameTrait;
+use App\Entity\Traits\HasTimestampTrait;
+use App\Repository\SourceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
-use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: SourceRepository::class)]
-#[ApiResource()]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new Patch(security: "is_granted('ROLE_USER')"),
+        new Delete(security: "is_granted('ROLE_USER')"),
+        new GetCollection(),
+        new Post(security: "is_granted('ROLE_USER')"),
+    ],
+    normalizationContext: ['groups' => ['get']]
+)]
 class Source
 {
-    use HasIdtrait;
-
-    use HasNametrait;
-
-    use HasDescriptiontrait;
-
-    use TimestampableEntity;
+    use HasIdTrait;
+    use HasNameTrait;
+    use HasDescriptionTrait;
+    use HasTimestampTrait;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['get'])]
     private ?string $url = null;
 
-    #[ORM\ManyToMany(targetEntity: Recipe::class, inversedBy: 'sources')]
-    private Collection $recipe;
+    /**
+     * @var Collection<int, RecipeHasSource>
+     */
+    #[ORM\OneToMany(mappedBy: 'source', targetEntity: RecipeHasSource::class, orphanRemoval: true)]
+    private Collection $recipeHasSources;
 
     public function __construct()
     {
-        $this->recipe = new ArrayCollection();
+        $this->recipeHasSources = new ArrayCollection();
     }
-
 
     public function getUrl(): ?string
     {
         return $this->url;
     }
 
-    public function setUrl(?string $url): static
+    public function setUrl(?string $url): self
     {
         $this->url = $url;
 
@@ -49,26 +64,37 @@ class Source
     }
 
     /**
-     * @return Collection<int, Recipe>
+     * @return Collection<int, RecipeHasSource>
      */
-    public function getRecipe(): Collection
+    public function getRecipeHasSources(): Collection
     {
-        return $this->recipe;
+        return $this->recipeHasSources;
     }
 
-    public function addRecipe(Recipe $recipe): static
+    public function addRecipeHasSource(RecipeHasSource $recipeHasSource): self
     {
-        if (!$this->recipe->contains($recipe)) {
-            $this->recipe->add($recipe);
+        if (!$this->recipeHasSources->contains($recipeHasSource)) {
+            $this->recipeHasSources[] = $recipeHasSource;
+            $recipeHasSource->setSource($this);
         }
 
         return $this;
     }
 
-    public function removeRecipe(Recipe $recipe): static
+    public function removeRecipeHasSource(RecipeHasSource $recipeHasSource): self
     {
-        $this->recipe->removeElement($recipe);
+        if ($this->recipeHasSources->removeElement($recipeHasSource)) {
+            // set the owning side to null (unless already changed)
+            if ($recipeHasSource->getSource() === $this) {
+                $recipeHasSource->setSource(null);
+            }
+        }
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getName() . ' (' . $this->getId() . ')';
     }
 }

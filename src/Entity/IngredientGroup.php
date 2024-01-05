@@ -2,60 +2,80 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Traits\HasIdtrait;
-use App\Entity\Traits\HasNametrait;
 use ApiPlatform\Metadata\ApiResource;
-use App\Entity\Traits\HasPrioritytrait;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use App\Entity\Traits\HasIdTrait;
+use App\Entity\Traits\HasNameTrait;
+use App\Entity\Traits\HasPriorityTrait;
 use App\Repository\IngredientGroupRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: IngredientGroupRepository::class)]
-#[ApiResource()]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new Patch(),
+        new Delete(),
+        new GetCollection(),
+        new Post(),
+    ],
+    normalizationContext: ['groups' => ['get']]
+)]
 class IngredientGroup
 {
-    use HasIdtrait;
+    use HasIdTrait;
+    use HasNameTrait;
+    use HasPriorityTrait;
 
-    use HasNametrait;
-
-    use HasPrioritytrait;
-
+    /**
+     * @var Collection<int, RecipeHasIngredient>
+     */
     #[ORM\OneToMany(mappedBy: 'ingredientGroup', targetEntity: RecipeHasIngredient::class)]
-    private Collection $recipehasingredient;
+    private Collection $recipeHasIngredients;
 
     public function __construct()
     {
-        $this->recipehasingredient = new ArrayCollection();
+        $this->recipeHasIngredients = new ArrayCollection();
     }
 
     /**
      * @return Collection<int, RecipeHasIngredient>
      */
-    public function getRecipehasingredient(): Collection
+    public function getRecipeHasIngredients(): Collection
     {
-        return $this->recipehasingredient;
+        return $this->recipeHasIngredients;
     }
 
-    public function addRecipehasingredient(RecipeHasIngredient $recipehasingredient): static
+    public function addRecipeHasIngredient(RecipeHasIngredient $recipeHasIngredient): self
     {
-        if (!$this->recipehasingredient->contains($recipehasingredient)) {
-            $this->recipehasingredient->add($recipehasingredient);
-            $recipehasingredient->setIngredientGroup($this);
+        if (!$this->recipeHasIngredients->contains($recipeHasIngredient)) {
+            $this->recipeHasIngredients[] = $recipeHasIngredient;
+            $recipeHasIngredient->setIngredientGroup($this);
         }
 
         return $this;
     }
 
-    public function removeRecipehasingredient(RecipeHasIngredient $recipehasingredient): static
+    public function removeRecipeHasIngredient(RecipeHasIngredient $recipeHasIngredient): self
     {
-        if ($this->recipehasingredient->removeElement($recipehasingredient)) {
+        if ($this->recipeHasIngredients->removeElement($recipeHasIngredient)) {
             // set the owning side to null (unless already changed)
-            if ($recipehasingredient->getIngredientGroup() === $this) {
-                $recipehasingredient->setIngredientGroup(null);
+            if ($recipeHasIngredient->getIngredientGroup() === $this) {
+                $recipeHasIngredient->setIngredientGroup(null);
             }
         }
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getName() . ' (' . $this->getId() . ')';
     }
 }
