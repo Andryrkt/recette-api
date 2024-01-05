@@ -2,15 +2,17 @@
 
 namespace App\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
 use App\Entity\Traits\HasIdtrait;
 use App\Entity\Traits\HasNametrait;
+use ApiPlatform\Metadata\ApiResource;
 use App\Entity\Traits\HasPrioritytrait;
+use Doctrine\Common\Collections\Collection;
 use App\Repository\IngredientGroupRepository;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: IngredientGroupRepository::class)]
+#[ApiResource()]
 class IngredientGroup
 {
     use HasIdtrait;

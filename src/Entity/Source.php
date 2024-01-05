@@ -2,16 +2,18 @@
 
 namespace App\Entity;
 
-use App\Entity\Traits\HasDescriptiontrait;
+use Doctrine\ORM\Mapping as ORM;
 use App\Entity\Traits\HasIdtrait;
 use App\Entity\Traits\HasNametrait;
 use App\Repository\SourceRepository;
-use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Metadata\ApiResource;
+use App\Entity\Traits\HasDescriptiontrait;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 #[ORM\Entity(repositoryClass: SourceRepository::class)]
+#[ApiResource()]
 class Source
 {
     use HasIdtrait;

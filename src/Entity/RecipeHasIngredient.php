@@ -2,11 +2,13 @@
 
 namespace App\Entity;
 
-use App\Entity\Traits\HasIdtrait;
-use App\Repository\RecipeHasIngredientRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Traits\HasIdtrait;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\RecipeHasIngredientRepository;
 
 #[ORM\Entity(repositoryClass: RecipeHasIngredientRepository::class)]
+#[ApiResource()]
 class RecipeHasIngredient
 {
     use HasIdtrait;

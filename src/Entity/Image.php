@@ -2,15 +2,17 @@
 
 namespace App\Entity;
 
-use App\Entity\Traits\HasDescriptiontrait;
+use Doctrine\ORM\Mapping as ORM;
 use App\Entity\Traits\HasIdtrait;
 use App\Entity\Traits\HasNametrait;
-use App\Entity\Traits\HasPrioritytrait;
 use App\Repository\ImageRepository;
-use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use App\Entity\Traits\HasPrioritytrait;
+use App\Entity\Traits\HasDescriptiontrait;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
+#[ApiResource()]
 class Image
 {
     use HasIdtrait;
